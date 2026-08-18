@@ -49,6 +49,7 @@ def reset(*paths: str) -> None:
 # config change, not a code change — that's the whole point of the REST spec.
 
 ICEBERG_ROOT = ROOT / "iceberg"
+_CATALOGS: dict[str, list[object]] = {}
 
 
 def _catalog_dir(name: str) -> Path:
@@ -79,11 +80,16 @@ def catalog(name: str = "lab"):
 
     d = _catalog_dir(name)
     (d / "warehouse").mkdir(parents=True, exist_ok=True)
-    return SqlCatalog(
+    result = SqlCatalog(
         name,
         uri=f"sqlite:///{d / 'catalog.db'}",
         warehouse=f"file://{d / 'warehouse'}",
     )
+    # SQLite permits unlinking an open database on POSIX but Windows keeps the
+    # file locked.  Remember local catalog handles so reset_catalog can close
+    # them before removing the directory on either platform.
+    _CATALOGS.setdefault(name, []).append(result)
+    return result
 
 
 def reset_catalog(name: str = "lab") -> None:
@@ -93,6 +99,8 @@ def reset_catalog(name: str = "lab") -> None:
     """
     import shutil
 
+    for cat in _CATALOGS.pop(name, []):
+        cat.close()
     shutil.rmtree(_catalog_dir(name), ignore_errors=True)
 
 

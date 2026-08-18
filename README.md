@@ -23,6 +23,20 @@ make data-ai    # corpus multimodal + agent traces cho NB7/NB8
 make lab        # http://localhost:8888
 ```
 
+### Windows (PowerShell)
+
+`Makefile` dùng đường dẫn Linux (`.venv/bin/...`). Trên Windows, chạy script
+PowerShell đi kèm thay thế; nó dùng lightweight path nên không cần Docker/JVM:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\setup.ps1 -Action all       # setup, smoke, data, data-ai, test, run-all
+.\setup.ps1 -Action lab       # Jupyter Lab tại http://localhost:8888
+```
+
+Có thể chạy từng bước với `-Action setup`, `smoke`, `data`, `data-ai`, `test`,
+hoặc `run-all`.
+
 Yêu cầu: **Python 3.10 – 3.14**. Không cần gì khác.
 
 > **Đã sửa (v2):** phiên bản trước chặn Python 3.14 vì `pyarrow` chưa có wheel.

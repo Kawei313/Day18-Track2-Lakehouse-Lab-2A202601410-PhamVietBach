@@ -9,6 +9,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import time
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +26,13 @@ def main() -> int:
     failures, total = [], 0.0
     for nb in notebooks:
         t0 = time.perf_counter()
-        proc = subprocess.run([sys.executable, str(nb)], capture_output=True, text=True)
+        # Windows console defaults to a legacy code page (often cp1252), which
+        # cannot print the Vietnamese/Unicode teaching output in these notebooks.
+        # Keep notebook output portable without requiring a system-wide codepage
+        # change.
+        env = os.environ | {"PYTHONIOENCODING": "utf-8"}
+        proc = subprocess.run([sys.executable, str(nb)], capture_output=True,
+                              text=True, encoding="utf-8", errors="replace", env=env)
         dt = time.perf_counter() - t0
         total += dt
         if proc.returncode == 0:
